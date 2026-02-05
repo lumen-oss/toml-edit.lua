@@ -2,7 +2,7 @@ use itertools::Itertools;
 use mlua::{ExternalError, Lua, LuaSerdeExt, Result, Table, Value};
 use std::cell::RefCell;
 use std::rc::Rc;
-use toml_edit::{DocumentMut, ImDocument, Key};
+use toml_edit::{Document, DocumentMut, Key};
 
 // TODO: Better error messages
 
@@ -398,7 +398,7 @@ pub fn toml_edit(lua: &Lua) -> Result<mlua::Table> {
         lua.create_function(move |lua: &Lua, str: mlua::String| {
             let spanned = lua.create_table()?;
 
-            let document: ImDocument<String> = match str.to_string_lossy().parse() {
+            let document: Document<String> = match str.to_string_lossy().parse() {
                 Ok(document) => document,
                 Err(err) => return Err(err.into_lua_err()),
             };
