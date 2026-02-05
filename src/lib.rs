@@ -6,10 +6,7 @@ use toml_edit::{DocumentMut, ImDocument, Key};
 
 // TODO: Better error messages
 
-pub fn parse<'lua>(lua: &'lua Lua, document: Rc<RefCell<DocumentMut>>) -> Result<mlua::Table<'lua>>
-where
-    'lua: 'static,
-{
+pub fn parse(lua: &Lua, document: Rc<RefCell<DocumentMut>>) -> Result<mlua::Table> {
     let table = lua.create_table()?;
     table.set("__path", Vec::<String>::new())?;
 
@@ -19,7 +16,7 @@ where
     list_metatable.set(
         "__index",
         lua.create_function(move |lua, (tbl, key): (mlua::Table, mlua::Integer)| {
-            let path = tbl.get::<_, Vec<String>>("__path")?;
+            let path: Vec<String> = tbl.get("__path")?;
 
             let binding = list_index_document.borrow();
             let entry = path.clone().into_iter().try_fold(
@@ -78,8 +75,8 @@ where
     list_metatable.set(
         "__newindex",
         lua.create_function(
-            move |_, (tbl, key, value): (mlua::Table, mlua::Integer, Value)| {
-                let path = tbl.get::<_, Vec<String>>("__path")?;
+            move |lua, (tbl, key, value): (mlua::Table, mlua::Integer, Value)| {
+                let path: Vec<String> = tbl.get("__path")?;
 
                 let mut binding = list_newindex_document.borrow_mut();
                 let entry: &mut toml_edit::Item =
@@ -167,7 +164,7 @@ where
     table_metatable.set(
         "__index",
         lua.create_function(move |lua, (tbl, key): (mlua::Table, mlua::String)| {
-            let mut path = tbl.get::<_, Vec<String>>("__path")?;
+            let mut path: Vec<String> = tbl.get("__path")?;
             path.push(key.to_str()?.to_string());
 
             let binding = table_index_document.borrow();
@@ -196,7 +193,7 @@ where
                 toml_edit::Item::Table(_) => {
                     let table = lua.create_table()?;
                     table.set("__path", path)?;
-                    table.set_metatable(Some(table_metatable_clone.clone()));
+                    table.set_metatable(Some(table_metatable_clone.clone()))?;
 
                     Ok(Value::Table(table))
                 }
@@ -208,13 +205,13 @@ where
                     toml_edit::Value::InlineTable(_) => {
                         let table = lua.create_table()?;
                         table.set("__path", path)?;
-                        table.set_metatable(Some(table_metatable_clone.clone()));
+                        table.set_metatable(Some(table_metatable_clone.clone()))?;
                         Ok(Value::Table(table))
                     }
                     toml_edit::Value::Array(_) => {
                         let table = lua.create_table()?;
                         table.set("__path", path)?;
-                        table.set_metatable(Some(list_metatable_clone.clone()));
+                        table.set_metatable(Some(list_metatable_clone.clone()))?;
                         Ok(Value::Table(table))
                     }
                     _ => Err(mlua::Error::RuntimeError(format!(
@@ -236,8 +233,8 @@ where
     table_metatable.set(
         "__newindex",
         lua.create_function(
-            move |_, (tbl, key, value): (mlua::Table, mlua::String, Value)| {
-                let mut path = tbl.get::<_, Vec<String>>("__path")?;
+            move |lua, (tbl, key, value): (mlua::Table, mlua::String, Value)| {
+                let mut path: Vec<String> = tbl.get("__path")?;
                 path.push(key.to_str()?.to_string());
 
                 let mut binding = table_newindex_document.borrow_mut();
@@ -263,8 +260,8 @@ where
                             entry.get_mut(next_key.as_str()).unwrap()
                         });
 
-                fn convert_lua_value_to_toml_item<'lua>(
-                    lua: &'lua Lua,
+                fn convert_lua_value_to_toml_item(
+                    lua: &Lua,
                     value: &Value,
                     is_parent_array: bool,
                 ) -> Result<toml_edit::Item> {
@@ -321,7 +318,7 @@ where
                                     let (table_key, table_value) = table_pair?;
                                     if let Value::String(table_key_str) = table_key {
                                         let _ = item.as_table_mut().unwrap().insert(
-                                            table_key_str.to_str()?,
+                                            &table_key_str.to_str()?,
                                             convert_lua_value_to_toml_item(
                                                 lua,
                                                 &table_value,
@@ -366,13 +363,13 @@ where
         lua.create_function(move |lua, ()| lua.to_value(&document.borrow().to_string()))?,
     )?;
 
-    table.set_metatable(Some(table_metatable.clone()));
+    table.set_metatable(Some(table_metatable.clone()))?;
 
     Ok(table)
 }
 
 #[mlua::lua_module]
-pub fn toml_edit(lua: &'static Lua) -> Result<mlua::Table> {
+pub fn toml_edit(lua: &Lua) -> Result<mlua::Table> {
     let table = lua.create_table()?;
     table.set(
         "parse",
