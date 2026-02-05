@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/lumen-oss/toml-edit.lua/compare/v0.6.1...v0.7.0) (2026-02-05)
+
+
+### Features
+
+* support Lua 5.5 ([#49](https://github.com/lumen-oss/toml-edit.lua/issues/49)) ([5bc3227](https://github.com/lumen-oss/toml-edit.lua/commit/5bc3227b47be597ddc76a0fd1216f81d1a04b6b4))
+
 ## [0.6.1](https://github.com/nvim-neorocks/toml-edit.lua/compare/v0.6.0...v0.6.1) (2024-11-09)
 
 
