@@ -15,7 +15,7 @@ jobs:
           - { os: macos-13, target: x86_64-darwin }
           - { os: macos-14, target: aarch64-darwin }
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - uses: DeterminateSystems/nix-installer-action@main
     - uses: cachix/cachix-action@v15
       with:
