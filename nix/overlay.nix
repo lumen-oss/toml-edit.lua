@@ -22,10 +22,6 @@
             busted
           ]
           ++ oa.propagatedBuildInputs;
-      preCheck = ''
-        mkdir luarocks
-        luarocks $LUAROCKS_EXTRA_ARGS make --tree=luarocks --deps-mode=all
-      '';
       doCheck = true;
     });
   };
